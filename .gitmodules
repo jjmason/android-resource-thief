@@ -1,0 +1,12 @@
+[submodule "contrib/HoloEverywhere"]
+	path = contrib/HoloEverywhere
+	url = https://github.com/jjmason/HoloEverywhere.git
+[submodule "contrib/ActionBarSherlock"]
+	path = contrib/ActionBarSherlock
+	url = https://github.com/jjmason/ActionBarSherlock.git
+[submodule "contrib/android-viewpagertabs"]
+	path = contrib/android-viewpagertabs
+	url = https://github.com/jjmason/android-viewpagertabs.git
+[submodule "contrib/ViewPagerExtensions"]
+	path = contrib/ViewPagerExtensions
+	url = https://github.com/jjmason/ViewPagerExtensions.git
