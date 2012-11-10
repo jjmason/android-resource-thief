@@ -1,0 +1,10 @@
+<resources>
+
+    <string name="app_name">Resource Thief</string> 
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_app_list">Resource Thief</string>
+	<string name="nada"></string>
+	<string name="loading_resources">Loading Resources...</string>
+	<string name="export_now">Export Now</string>
+	<string name="export_later">Export Later</string>
+</resources>

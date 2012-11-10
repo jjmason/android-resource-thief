@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"  
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:baselineAligned="false">
+
+    <FrameLayout
+        android:id="@+id/iconContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp" 
+		android:layout_marginTop="8dp"
+		android:layout_marginBottom="8dp"> 
+		<ImageView 
+		    android:id="@+id/image"
+		    android:layout_width="@dimen/list_icon_size"
+		    android:layout_height="@dimen/list_icon_size"
+		    android:layout_gravity="center_vertical|center_horizontal"
+		    android:scaleType="centerInside" 
+		    android:src="@drawable/error_loading_drawable"
+		    />
+    </FrameLayout>
+
+    <View 
+        android:id="@+id/divider1" 
+        android:background="@drawable/divider_vertical_holo_dark"
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        />
+    
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical" 
+            >
+
+        	<TextView
+        	    android:id="@+id/primaryText"
+        	    android:layout_width="0dp"
+        	    android:layout_height="wrap_content"
+        	    android:layout_weight="1"
+        	    android:ellipsize="end"
+        	    android:maxLines="1" 
+        	    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:id="@+id/infoText"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/secondaryText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1" 
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:visibility="visible" />
+
+    </LinearLayout>
+    
+    <View 
+        android:background="@drawable/divider_vertical_holo_dark"
+        android:id="@+id/divider2"
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        />
+    
+    <FrameLayout
+        android:id="@+id/checkboxContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:clickable="true" >
+
+        <CheckBox
+            android:id="@+id/checkbox"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="12dp"
+            android:checked="false" />
+
+    </FrameLayout>
+    
+</LinearLayout>

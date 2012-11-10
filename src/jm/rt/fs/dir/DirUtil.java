@@ -1,0 +1,122 @@
+/**
+ *  Copyright 2010 Ryszard Wiśniewski <brut.alll@gmail.com>
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package jm.rt.fs.dir;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+/**
+ * @author Ryszard Wiśniewski <brut.alll@gmail.com>
+ */
+public class DirUtil {
+    public static void copyToDir(Directory in, Directory out)
+            throws DirectoryException {
+        for (String fileName : in.getFiles(true)) {
+            copyToDir(in, out, fileName);
+        }
+    }
+
+    public static void copyToDir(Directory in, Directory out,
+            String[] fileNames) throws DirectoryException {
+        for (int i = 0; i < fileNames.length; i++) {
+            copyToDir(in, out, fileNames[i]);
+        }
+    }
+
+    public static void copyToDir(Directory in, Directory out, String fileName)
+            throws DirectoryException {
+        try {
+            if (in.containsDir(fileName)) {
+                // TODO: remove before copying
+                in.getDir(fileName).copyToDir(out.createDir(fileName));
+            } else {
+                copyAndClose(in.getFileInput(fileName),
+                    out.getFileOutput(fileName));
+            }
+        } catch (IOException ex) {
+            throw new DirectoryException(
+                "Error copying file: " + fileName, ex);
+        }
+    }
+
+    public static void copyAndClose(InputStream in, OutputStream out) throws IOException{
+    	final byte[] buffer = new byte[4096];
+    	int n;
+    	try{
+    		while((n = in.read(buffer)) >= 0){
+    			out.write(buffer, 0, n);
+    		}
+    	}finally{
+    		try{
+    			out.close();
+    			in.close();
+    		}catch(IOException e){}
+    	}
+    	
+    }
+    
+    public static void copyToDir(Directory in, File out)
+            throws DirectoryException {
+        for (String fileName : in.getFiles(true)) {
+            copyToDir(in, out, fileName);
+        }
+    }
+
+    public static void copyToDir(Directory in, File out, String[] fileNames)
+            throws DirectoryException {
+        for (int i = 0; i < fileNames.length; i++) {
+            copyToDir(in, out, fileNames[i]);
+        }
+    }
+
+    public static void copyToDir(Directory in, File out, String fileName)
+            throws DirectoryException {
+        try {
+            if (in.containsDir(fileName)) {
+                rmdir(new File(out, fileName));
+                in.getDir(fileName).copyToDir(new File(out, fileName));
+            } else {
+                File outFile = new File(out, fileName);
+                outFile.getParentFile().mkdirs();
+                copyAndClose(in.getFileInput(fileName),
+                    new FileOutputStream(outFile));
+            }
+        } catch (IOException ex) {
+            throw new DirectoryException(
+                "Error copying file: " + fileName, ex);
+        } catch (Exception ex) {
+            throw new DirectoryException(
+                "Error copying file: " + fileName, ex);
+        }
+    }
+    
+    public static void rmdir(File dir){
+    	if(!dir.exists())
+    		return;
+    	for(File f : dir.listFiles()){
+    		if(f.isDirectory()){
+    			rmdir(f);
+    		}else{
+    			f.delete();
+    		}
+    	}
+    	dir.delete();
+    }
+}
