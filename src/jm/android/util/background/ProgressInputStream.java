@@ -27,6 +27,11 @@ public class ProgressInputStream extends InputStream {
 		mProgressTarget.setMax(mLength);
 	}
 
+	public ProgressInputStream(InputStream in, long length,
+			ProgressTarget progressTarget) { 
+		this(in, (int) length, progressTarget);
+	}
+
 	@Override
 	public void close() throws IOException { 
 		mInputStream.close();

@@ -2,12 +2,11 @@ package jm.util;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
-import android.view.View;
+import android.view.*;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewParent;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.*; 
 
 public class ViewAssistant {
 	private final View v;

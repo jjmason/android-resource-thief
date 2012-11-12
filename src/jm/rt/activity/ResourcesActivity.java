@@ -1,5 +1,7 @@
 package jm.rt.activity;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -9,12 +11,17 @@ import java.util.Set;
 
 import jm.android.util.background.ProgressTarget;
 import jm.rt.R;
+import jm.rt.export.ApkFile;
+import jm.rt.export.ApkManager;
+import jm.rt.export.Exporter;
 import jm.rt.fragment.ResourceListFragment;
 import jm.rt.fragment.ResourceListFragment.ListFragmentListener;
 import jm.rt.res.AppResources;
+import jm.rt.res.AppResources.ResourceLoadException;
 import jm.rt.res.Resource;
 import jm.rt.res.Resource.Type;
 import jm.util.Functional.Predicate;
+import jm.util.ListUtil;
 import jm.util.ViewAssistant;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -26,13 +33,11 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.text.Html;
-import android.text.Spanned;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -54,6 +59,7 @@ public class ResourcesActivity extends SherlockFragmentActivity implements
 	public static final String EXTRA_PACKAGE_INFO = "packageInfo";
 	private static final String TAG = "AppDetail";
 	private static final String STATE_SELECTED_ITEMS = "selectedItems";
+	private static final String STATE_RESOURCE_IDS = "resourceIds";
 
 	private Map<String, String> sExtensionToDescription = new HashMap<String, String>();
 	static {
@@ -65,25 +71,35 @@ public class ResourcesActivity extends SherlockFragmentActivity implements
 	private ViewPager mPager;
 	private SwipeyTabsView mTabs;
 	private ActionMode mActionMode;
-	private Set<Integer> mSelectedItems = 
-			new LinkedHashSet<Integer>();
+	private Set<Integer> mSelectedItems = new LinkedHashSet<Integer>();
 	private AppResources mAppResources;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.resources_activity);
 
-		if(savedInstanceState != null && 
-				savedInstanceState.containsKey(STATE_SELECTED_ITEMS)){
-			int[] sel = savedInstanceState.getIntArray(STATE_SELECTED_ITEMS);
-			for(int id : sel){
-				mSelectedItems.add(id);
+		mPackageInfo = getIntent().getParcelableExtra(EXTRA_PACKAGE_INFO);
+
+		if (savedInstanceState != null) {
+			if (savedInstanceState.containsKey(STATE_SELECTED_ITEMS)) {
+				int[] sel = savedInstanceState
+						.getIntArray(STATE_SELECTED_ITEMS);
+				for (int id : sel) {
+					mSelectedItems.add(id);
+				}
+			}
+			if (savedInstanceState.containsKey(STATE_RESOURCE_IDS)) {
+				int[] ids = savedInstanceState.getIntArray(STATE_RESOURCE_IDS);
+				try {
+					mAppResources = AppResources.fromIdArray(this,
+							mPackageInfo, ids);
+				} catch (ResourceLoadException e) {
+					throw new RuntimeException(e);
+				}
 			}
 		}
-			
-		
-		mPackageInfo = getIntent().getParcelableExtra(EXTRA_PACKAGE_INFO);
+
 		addPage("R.drawable", "No drawble resources found", Type.DRAWABLE);
 		addPage("R.color", "No color resources found", Type.COLOR);
 		addPage("R.anim", "No animation resources found", Type.ANIM);
@@ -99,13 +115,50 @@ public class ResourcesActivity extends SherlockFragmentActivity implements
 		mTabs.setAdapter(new MyTabsAdapter());
 		mTabs.setViewPager(mPager);
 
-		new ResourceLoaderTask().execute();
+		if (mAppResources == null) {
+			new ResourceLoaderTask().execute();
+		}else{
+			addResourcesToLists();
+		}
+
+	}
+
+	private void addResourcesToLists() {
+		if (mAppResources == null)
+			throw new IllegalStateException(
+					"wtf app resources shouldn't be null here");
+		for (Page p : mPages) {
+			if (p.fragmentType != Page.FRAGMENT_TYPE_RESOURCE_LIST)
+				continue;
+			if (p.types < 0 && p.filter != null) {
+				p.listAdapter.mItems = ListUtil.filter(
+						mAppResources.listResources(), p.filter);
+			} else {
+				p.listAdapter.mItems = mAppResources.listResources(p.types);
+			}
+			p.listAdapter.notifyDataSetChanged();
+		}
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		// TODO save resource ids and selected resource ids.
 		super.onSaveInstanceState(outState);
+		if (mAppResources != null) {
+			outState.putIntArray(STATE_RESOURCE_IDS, mAppResources.toIdArray());
+		}
+		if (mSelectedItems != null && !mSelectedItems.isEmpty()) {
+			outState.putIntArray(STATE_SELECTED_ITEMS,
+					setToArray(mSelectedItems));
+		}
+	}
+
+	private static int[] setToArray(Set<Integer> set) {
+		int[] ia = new int[set.size()];
+		int idx = 0;
+		for (int i : set) {
+			ia[idx++] = i;
+		}
+		return ia;
 	}
 
 	private ResourceListAdapter newAdapter() {
@@ -150,10 +203,7 @@ public class ResourcesActivity extends SherlockFragmentActivity implements
 		protected void onPostExecute(Object result) {
 			if (result instanceof AppResources) {
 				mAppResources = (AppResources) result;
-				for (Page pg : mPages) {
-					pg.listAdapter.mItems = mAppResources.listResources(pg.types);
-					pg.listAdapter.notifyDataSetChanged();
-				}
+				addResourcesToLists();
 				// do this AFTER setting the items
 				dismissDialog();
 			} else {
@@ -281,22 +331,15 @@ public class ResourcesActivity extends SherlockFragmentActivity implements
 	private final ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
 
 		@Override
-		public boolean onPrepareActionMode(ActionMode mode,  Menu menu) {
+		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
 			return false;
 		}
 
 		@Override
 		public void onDestroyActionMode(ActionMode mode) {
 			mActionMode = null;
-			if (mSelectedItems.size() != 0) {
-				mSelectedItems.clear();
-				for (Page p : mPages) {
-					if (p.fragmentType == Page.FRAGMENT_TYPE_RESOURCE_LIST
-							&& p.listAdapter != null) {
-						p.listAdapter.notifyDataSetChanged();
-					}
-				}
-			}
+			mSelectedItems.clear();
+			refreshListAdapters();
 		}
 
 		@Override
@@ -322,61 +365,64 @@ public class ResourcesActivity extends SherlockFragmentActivity implements
 		}
 	};
 
-	private void exportSelectedItems(){
-		StringBuilder sb = new StringBuilder();
-		boolean first = true;
-		for(int id : mSelectedItems){
-			Resource res = mAppResources.getResource(id);
-			if(!first){
-				sb.append("<br/>"); 
-			}else{
-				first = false;
-			}
-			sb.append('@')
-				.append(res.getTypeName())
-				.append('/')
-				.append(res.getName());
+	private void exportSelectedItems() {
+		File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+		if (!dir.exists()) {
+			Log.e(TAG, "can't write to " + dir.getAbsolutePath());
+			return;
 		}
-		Spanned html = Html.fromHtml(sb.toString());
-		new AlertDialog.Builder(this)
-			.setTitle("Would Export:")
-			.setMessage(html)
-			.show();
+		ApkFile apk = null;
+		try{
+			apk = ApkManager.getInstance().load(mPackageInfo);
+		}catch(IOException e){
+			Log.e(TAG, "couldn't create apk file in " + mPackageInfo.applicationInfo.sourceDir,e);
+			return;
+		}
+		
+		Exporter exporter = new Exporter(this, apk, dir.getAbsolutePath(), mSelectedItems, null);
+		Log.d(TAG, "exporting...");
+		try{
+			exporter.export();
+		}catch(Exception e){
+			Log.e(TAG, "FAIL", e);
+			return;
+		}
+		Log.d(TAG,"done!");
 	}
-	
+
 	public boolean isItemSelected(int id) {
 		return mSelectedItems.contains(id);
 	}
 
 	public void setItemSelected(int id, boolean selected,
 			boolean refreshListAdapters) {
-		boolean changed = selected ? mSelectedItems.add(id)
-				: mSelectedItems.remove(id);
-		if(changed){
-			if(refreshListAdapters){
+		boolean changed = selected ? mSelectedItems.add(id) : mSelectedItems
+				.remove(id);
+		if (changed) {
+			if (refreshListAdapters) {
 				refreshListAdapters();
 			}
 			boolean empty = mSelectedItems.isEmpty();
-			if(empty){
-				if(mActionMode != null){
+			if (empty) {
+				if (mActionMode != null) {
 					mActionMode.finish();
-				} 
-			}else{
-				if(mActionMode == null){
+				}
+			} else {
+				if (mActionMode == null) {
 					mActionMode = startActionMode(mActionModeCallback);
 				}
 			}
 		}
 	}
 
-	private void refreshListAdapters(){
-		for(Page p : mPages){
-			if(p.listAdapter != null){
+	private void refreshListAdapters() {
+		for (Page p : mPages) {
+			if (p.listAdapter != null) {
 				p.listAdapter.notifyDataSetChanged();
 			}
 		}
 	}
-	
+
 	private class ResourceListAdapter extends BaseAdapter {
 		private List<Resource> mItems;
 

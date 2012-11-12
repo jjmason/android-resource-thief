@@ -1,14 +1,13 @@
 package jm.rt.service;
 import jm.rt.service.ExportStatus;
-import jm.rt.service.ResourceGID;
-import jm.rt.service.IExportListener;
+import jm.rt.service.IStatusListener;
+import jm.rt.service.ExportRequest;
 
 interface IExportService {  
-	ExportStatus[] getExportStatus(in String packageName);
-	
-	void exportResource(in String packageName, in int resourceId);
-	 
-	void addExportListener(IExportListener exportListener);
-	 
-	void removeExportListener(IExportListener exportListener);
+	int export(in ExportRequest request);
+	ExportStatus getStatus(in int requestId);
+	void addStatusListener(in IStatusListener listener);
+	void removeStatusListener(in IStatusListener listener);
+	void cancel(in int requestId);
+	void removeFinished();
 }
