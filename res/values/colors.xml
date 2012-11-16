@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="matched_text_background">#ED3939</color>
+    <color name="matched_text_forground">#FFFF</color>
+</resources>

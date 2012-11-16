@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string-array name="sort_names">
+	    <item>App Name</item>
+	    <item>Package Name</item>
+	    <item>Date Installed</item>
+	</string-array>    
+</resources>

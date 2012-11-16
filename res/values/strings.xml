@@ -1,10 +1,12 @@
 <resources>
-
-    <string name="app_name">Resource Thief</string> 
-    <string name="menu_settings">Settings</string>
-    <string name="title_activity_app_list">Resource Thief</string>
-	<string name="nada"></string>
-	<string name="loading_resources">Loading Resources...</string>
-	<string name="export_now">Export Now</string>
-	<string name="export_later">Export Later</string>
+	<string name="apps">Apps</string>    
+	<string name="app_name">Resource Thief</string>
+	<string name="loading_apps">Loading apps&#8230;</string>
+	<string name="menu_search">Search</string>
+	<string name="sort">Sort</string>
+	<string name="app_search_hint">App Search Hints</string>
+	<string name="sort_dialog_title">Sort</string>
+	<string name="drawables_and_colors">Drawables &amp; Colors</string>
+	<string name="loading_drawable">Loading&#8230;</string>
+	<string name="error_loading_drawable">Error loading drawable</string>
 </resources>
